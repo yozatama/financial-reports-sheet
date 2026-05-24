@@ -15,7 +15,7 @@ spreadsheet you fully control.
   debt monitoring, cash-flow heatmap, automatic insights.
 - **Quick Add (AI)** — type *"jajan kopi 35rb pake gopay"* and the parser
   fills in type, category, amount, account, merchant, tags with a confidence
-  score. Optional OpenAI fallback for low-confidence inputs.
+  score. Optional Google Gemini fallback for low-confidence inputs.
 - **Wallets & banks** — Cash, BCA, Mandiri, SeaBank, GoPay, OVO, DANA,
   ShopeePay, etc. Balances auto-update from transactions.
 - **Debt tracking** — Credit Cards, PayLater, loans, installments, with
@@ -32,7 +32,7 @@ spreadsheet you fully control.
 ├── README.md
 ├── docs/
 │   ├── SETUP.md
-│   └── OPENAI_INTEGRATION.md
+│   └── GEMINI_INTEGRATION.md
 └── src/
     ├── appsscript.json
     ├── Code.gs                  # menu + dialog launchers + server endpoints
@@ -45,7 +45,7 @@ spreadsheet you fully control.
     ├── CategoryService.gs       # category CRUD
     ├── BudgetService.gs         # budget recompute + status
     ├── AIParser.gs              # rule-based ID/EN NLP + confidence
-    ├── OpenAIClient.gs          # optional AI fallback
+    ├── GeminiClient.gs          # optional AI fallback (Google Gemini)
     ├── DashboardService.gs      # dashboard layout + insights
     ├── Triggers.gs              # daily / monthly automations
     ├── Styles.html              # shared CSS (light + dark)
@@ -65,8 +65,8 @@ See [`docs/SETUP.md`](docs/SETUP.md) for the full walk-through. TL;DR:
    matching script files of the same name (or use [clasp](https://github.com/google/clasp)).
 3. Save, reload the spreadsheet, and choose **Kiro Finance → Setup → Run Initial Setup**.
 4. Use **Kiro Finance → Quick Add (AI)** to start logging transactions in plain language.
-5. (Optional) Add an OpenAI key in the *Settings* sheet — see
-   [`docs/OPENAI_INTEGRATION.md`](docs/OPENAI_INTEGRATION.md).
+5. (Optional) Add a Gemini API key in the *Settings* sheet — see
+   [`docs/GEMINI_INTEGRATION.md`](docs/GEMINI_INTEGRATION.md).
 
 ## Example AI inputs
 

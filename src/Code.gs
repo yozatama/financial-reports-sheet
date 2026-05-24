@@ -106,7 +106,7 @@ function uiBootstrap() {
     incomeCategories: CategoryService.topLevelNames(TYPES.INCOME),
     transferCategories: CategoryService.topLevelNames(TYPES.TRANSFER),
     currency: getSetting('currency', APP.DEFAULT_CURRENCY),
-    hasOpenAI: OpenAIClient.isConfigured()
+    hasAIFallback: GeminiClient.isConfigured()
   };
 }
 

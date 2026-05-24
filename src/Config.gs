@@ -101,7 +101,7 @@ const THRESHOLDS = Object.freeze({
   HEALTHY_CREDIT_UTIL: 0.30,       // outstanding / limit
   HEALTHY_SAVINGS_RATE: 0.20,      // savings / income
   AI_CONFIDENCE_CONFIRM: 0.65,     // below -> ask user to confirm
-  AI_CONFIDENCE_OPENAI: 0.55       // below -> escalate to OpenAI if available
+  AI_CONFIDENCE_FALLBACK: 0.55     // below -> escalate to Gemini if available
 });
 
 /**

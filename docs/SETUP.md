@@ -59,7 +59,7 @@ Then open the bound spreadsheet, reload, and follow steps 9–10 above.
 - **Script container UI** — show menus, dialogs, and the sidebar.
 - **Send mail as you** — only used if you enable email reminders in
   `Settings`. Nothing leaves your account otherwise.
-- **External request** — only used by the optional OpenAI fallback.
+- **External request** — only used by the optional Gemini fallback.
 - **Run when you are not present** — needed by the daily / monthly triggers.
 
 If you don't want any of these, edit `src/appsscript.json` and remove the
@@ -85,5 +85,5 @@ corresponding scope; just be aware features that require it will fail.
 | Menu missing after install | Reload the spreadsheet tab; `onOpen` runs on load. |
 | Dropdowns empty in dialogs | Run *Setup → Run Initial Setup* once so the lookup sheets exist. |
 | Balances not updating | Run *Setup → Recompute Balances*. The recompute is also triggered automatically after every Add/Edit/Delete. |
-| AI parsing returns low confidence | Add merchant/keyword to the dictionary in `AIParser.gs::CATEGORY_KEYWORDS`, **or** configure the OpenAI fallback. |
+| AI parsing returns low confidence | Add merchant/keyword to the dictionary in `AIParser.gs::CATEGORY_KEYWORDS`, **or** configure the Gemini fallback. |
 | Daily reminders not firing | *Setup → Install Daily Triggers* — required once per script project. |
