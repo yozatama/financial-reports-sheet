@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>Quick Add (AI)</h1>
+        <div class="sub">Type a transaction in plain language. Indonesian + English supported.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="raw">What did you do?</label>
+      <textarea id="raw" placeholder="e.g. jajan kopi 35rb pake gopay"></textarea>
+
+      <div class="examples" style="margin-top:10px">
+        <button type="button" data-ex="jajan kopi 35rb pake gopay">jajan kopi 35rb</button>
+        <button type="button" data-ex="bayar listrik 450k">bayar listrik 450k</button>
+        <button type="button" data-ex="gajian 8jt">gajian 8jt</button>
+        <button type="button" data-ex="isi bensin motor 50 ribu">isi bensin 50rb</button>
+        <button type="button" data-ex="tf ke bca 1.2jt">tf ke bca 1.2jt</button>
+        <button type="button" data-ex="makan sushi 120rb pake gopay">makan sushi 120rb</button>
+        <button type="button" data-ex="bayar cc bca 2jt">bayar cc bca 2jt</button>
+        <button type="button" data-ex="topup ovo 100rb">topup ovo 100rb</button>
+      </div>
+
+      <div class="row" style="margin-top:14px; gap:8px;">
+        <button class="btn btn-primary btn-block" id="parseBtn">Parse with AI</button>
+      </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none">
+      <div class="row between">
+        <div class="strong">Parsed result</div>
+        <div class="conf-wrap" style="width:50%">
+          <span class="small muted">Confidence</span>
+          <div class="conf-bar"><span id="confBar" style="width:0%"></span></div>
+          <span class="small strong" id="confLabel">0%</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="grid cols-2">
+        <div>
+          <label>Type</label>
+          <select id="type">
+            <option>Income</option><option>Expense</option><option>Transfer</option>
+          </select>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input id="amount" type="number" step="1" min="0">
+        </div>
+        <div>
+          <label>Category</label>
+          <select id="category"></select>
+        </div>
+        <div>
+          <label>Subcategory</label>
+          <input id="subcategory" type="text">
+        </div>
+        <div>
+          <label>Account (Source)</label>
+          <select id="account"></select>
+        </div>
+        <div id="accountToWrap">
+          <label>Account (To)</label>
+          <select id="account_to"><option value=""></option></select>
+        </div>
+        <div>
+          <label>Merchant</label>
+          <input id="merchant" type="text">
+        </div>
+        <div>
+          <label>Tags</label>
+          <input id="tags" type="text" placeholder="comma separated">
+        </div>
+      </div>
+
+      <label style="margin-top:8px">Description</label>
+      <input id="description" type="text">
+
+      <div class="kv" style="margin-top:8px">
+        <span class="k">Method</span>
+        <span class="v" id="methodLabel">rules</span>
+      </div>
+
+      <div class="row" style="margin-top:14px; gap:8px;">
+        <button class="btn btn-secondary" onclick="google.script.host.close()">Cancel</button>
+        <button class="btn btn-primary btn-block" id="commitBtn">Save Transaction</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">Saved</div>
+  </div>
+
+<script>
+  // ---------- Bootstrapping ----------
+  let parsed = null;
+  const $ = (id) => document.getElementById(id);
+
+  document.querySelectorAll('.examples button').forEach(b => {
+    b.addEventListener('click', () => { $('raw').value = b.dataset.ex; });
+  });
+  $('parseBtn').addEventListener('click', doParse);
+  $('commitBtn').addEventListener('click', doCommit);
+  $('type').addEventListener('change', toggleAccountTo);
+
+  google.script.run
+    .withSuccessHandler(populateLookups)
+    .withFailureHandler(e => toast('Failed to load options: ' + e.message, true))
+    .uiBootstrap();
+
+  function populateLookups(data) {
+    fillSelect('account', data.accounts, '');
+    fillSelect('account_to', data.accounts, '', true);
+    fillSelect('category', data.expenseCategories, '');
+    window.__lookups__ = data;
+  }
+  function fillSelect(id, options, selected, allowEmpty) {
+    const el = $(id);
+    el.innerHTML = '';
+    if (allowEmpty) el.appendChild(new Option('', ''));
+    options.forEach(o => el.appendChild(new Option(o, o)));
+    if (selected) el.value = selected;
+  }
+  function toggleAccountTo() {
+    $('accountToWrap').style.display = ($('type').value === 'Transfer') ? '' : 'none';
+  }
+
+  // ---------- Actions ----------
+  function doParse() {
+    const text = $('raw').value.trim();
+    if (!text) return toast('Please type something first', true);
+    setLoading('parseBtn', true, 'Parsing…');
+    google.script.run
+      .withSuccessHandler(res => {
+        setLoading('parseBtn', false, 'Parse with AI');
+        if (!res.ok) return toast(res.error, true);
+        parsed = res.data;
+        renderParsed(parsed);
+      })
+      .withFailureHandler(e => { setLoading('parseBtn', false, 'Parse with AI'); toast(e.message, true); })
+      .aiParse(text);
+  }
+
+  function renderParsed(p) {
+    $('resultCard').style.display = '';
+    $('type').value = p.transaction_type;
+    $('amount').value = p.amount;
+    fillSelect('category', categoriesForType(p.transaction_type), p.category);
+    $('subcategory').value = p.subcategory || '';
+    $('account').value = p.account || '';
+    $('account_to').value = p.account_to || '';
+    $('merchant').value = p.merchant || '';
+    $('description').value = p.description || '';
+    $('tags').value = (p.tags || []).join(', ');
+    const conf = Math.round((p.confidence || 0) * 100);
+    $('confBar').style.width = conf + '%';
+    $('confLabel').textContent = conf + '%';
+    $('methodLabel').textContent = p.method;
+    toggleAccountTo();
+    if (conf < 65) toast('Low confidence (' + conf + '%) – please review before saving', true);
+  }
+
+  function categoriesForType(type) {
+    const lk = window.__lookups__ || {};
+    if (type === 'Income') return lk.incomeCategories || [];
+    if (type === 'Transfer') return lk.transferCategories || [];
+    return lk.expenseCategories || [];
+  }
+
+  $('type').addEventListener('change', () => {
+    fillSelect('category', categoriesForType($('type').value), $('category').value);
+  });
+
+  function doCommit() {
+    if (!parsed) return;
+    const payload = Object.assign({}, parsed, {
+      transaction_type: $('type').value,
+      amount: parseFloat($('amount').value) || 0,
+      category: $('category').value,
+      subcategory: $('subcategory').value,
+      account: $('account').value,
+      account_to: $('account_to').value,
+      merchant: $('merchant').value,
+      description: $('description').value,
+      tags: $('tags').value.split(',').map(s => s.trim()).filter(Boolean)
+    });
+    setLoading('commitBtn', true, 'Saving…');
+    google.script.run
+      .withSuccessHandler(res => {
+        setLoading('commitBtn', false, 'Save Transaction');
+        if (!res.ok) return toast(res.error, true);
+        toast('Saved ✓');
+        setTimeout(() => google.script.host.close(), 700);
+      })
+      .withFailureHandler(e => { setLoading('commitBtn', false, 'Save Transaction'); toast(e.message, true); })
+      .aiCommit(payload);
+  }
+
+  // ---------- UI helpers ----------
+  function setLoading(id, on, label) {
+    const b = $(id);
+    b.disabled = on;
+    if (label) b.textContent = label;
+  }
+  function toast(msg, isError) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
