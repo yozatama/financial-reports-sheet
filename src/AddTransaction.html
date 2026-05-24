@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">＋</div>
+      <div>
+        <h1>Add Transaction</h1>
+        <div class="sub">Record an income, expense, or transfer.</div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <div class="grid cols-3">
+        <div>
+          <label>Type</label>
+          <select id="type">
+            <option>Expense</option><option>Income</option><option>Transfer</option>
+          </select>
+        </div>
+        <div>
+          <label>Date</label>
+          <input id="date" type="date">
+        </div>
+        <div>
+          <label>Time</label>
+          <input id="time" type="time">
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div>
+          <label>Category</label>
+          <select id="category"></select>
+        </div>
+        <div>
+          <label>Subcategory</label>
+          <input id="subcategory" type="text">
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div>
+          <label>Amount</label>
+          <input id="amount" type="number" min="0" step="1" placeholder="0">
+        </div>
+        <div>
+          <label>Account (Source)</label>
+          <select id="account"></select>
+        </div>
+      </div>
+
+      <div id="accountToWrap">
+        <label>Destination Account</label>
+        <select id="account_to"><option value=""></option></select>
+      </div>
+
+      <div class="grid cols-2">
+        <div>
+          <label>Merchant</label>
+          <input id="merchant" type="text" placeholder="optional">
+        </div>
+        <div>
+          <label>Tags</label>
+          <input id="tags" type="text" placeholder="comma separated">
+        </div>
+      </div>
+
+      <div>
+        <label>Description</label>
+        <textarea id="description" placeholder="optional note"></textarea>
+      </div>
+
+      <div class="row">
+        <input id="recurring" type="checkbox">
+        <label for="recurring" style="margin:0; text-transform:none; letter-spacing:0">Mark as recurring</label>
+      </div>
+
+      <div class="row" style="gap:8px">
+        <button class="btn btn-secondary" onclick="google.script.host.close()">Cancel</button>
+        <button class="btn btn-primary btn-block" id="saveBtn">Save Transaction</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">Saved</div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const today = new Date();
+  $('date').value = today.toISOString().slice(0, 10);
+  $('time').value = today.toTimeString().slice(0, 5);
+
+  google.script.run
+    .withSuccessHandler(boot)
+    .withFailureHandler(e => toast(e.message, true))
+    .uiBootstrap();
+
+  function boot(data) {
+    window.__lookups__ = data;
+    fillCategories();
+    fillSelect('account', data.accounts, data.accounts[0] || '');
+    fillSelect('account_to', data.accounts, '', true);
+    toggleAccountTo();
+  }
+
+  $('type').addEventListener('change', () => { fillCategories(); toggleAccountTo(); });
+  $('saveBtn').addEventListener('click', save);
+
+  function fillCategories() {
+    const type = $('type').value;
+    const lk = window.__lookups__ || {};
+    const cats = type === 'Income' ? lk.incomeCategories
+              : type === 'Transfer' ? lk.transferCategories
+              : lk.expenseCategories;
+    fillSelect('category', cats || [], (cats || [])[0] || '');
+  }
+  function fillSelect(id, options, selected, allowEmpty) {
+    const el = $(id);
+    el.innerHTML = '';
+    if (allowEmpty) el.appendChild(new Option('', ''));
+    options.forEach(o => el.appendChild(new Option(o, o)));
+    if (selected) el.value = selected;
+  }
+  function toggleAccountTo() {
+    $('accountToWrap').style.display = $('type').value === 'Transfer' ? '' : 'none';
+  }
+
+  function save() {
+    const tx = {
+      type: $('type').value,
+      date: $('date').value,
+      time: $('date').value + 'T' + ($('time').value || '00:00'),
+      category: $('category').value,
+      subcategory: $('subcategory').value,
+      amount: parseFloat($('amount').value) || 0,
+      account: $('account').value,
+      accountTo: $('account_to').value,
+      merchant: $('merchant').value,
+      description: $('description').value,
+      tags: $('tags').value.split(',').map(s => s.trim()).filter(Boolean),
+      recurring: $('recurring').checked
+    };
+    if (!tx.amount) return toast('Amount must be > 0', true);
+    if (tx.type === 'Transfer' && !tx.accountTo) return toast('Pick a destination account', true);
+
+    setLoading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        setLoading(false);
+        if (!res.ok) return toast(res.error, true);
+        toast('Saved ✓');
+        setTimeout(() => google.script.host.close(), 700);
+      })
+      .withFailureHandler(e => { setLoading(false); toast(e.message, true); })
+      .saveTransaction(tx);
+  }
+  function setLoading(on) {
+    const b = $('saveBtn');
+    b.disabled = on; b.textContent = on ? 'Saving…' : 'Save Transaction';
+  }
+  function toast(msg, isError) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>

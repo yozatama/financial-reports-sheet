@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">💳</div>
+      <div>
+        <h1>Add Debt</h1>
+        <div class="sub">Credit cards, PayLater, personal loans, installments.</div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <div class="grid cols-2">
+        <div>
+          <label>Debt Name</label>
+          <input id="name" placeholder="e.g. BCA Credit Card">
+        </div>
+        <div>
+          <label>Provider</label>
+          <input id="provider" placeholder="BCA, Shopee, Kredivo, ...">
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="type">
+            <option>Credit Card</option><option>PayLater</option>
+            <option>Personal Loan</option><option>Installment</option>
+            <option>Mortgage</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="status"><option>Active</option><option>Paid Off</option><option>Overdue</option></select>
+        </div>
+        <div>
+          <label>Outstanding Balance</label>
+          <input id="outstanding" type="number" step="1" min="0" value="0">
+        </div>
+        <div>
+          <label>Credit Limit</label>
+          <input id="limit" type="number" step="1" min="0" value="0">
+        </div>
+        <div>
+          <label>Min Payment</label>
+          <input id="minPayment" type="number" step="1" min="0" value="0">
+        </div>
+        <div>
+          <label>Interest %</label>
+          <input id="interest" type="number" step="0.01" min="0" value="0">
+        </div>
+        <div>
+          <label>Due Day (1-31)</label>
+          <input id="dueDay" type="number" min="1" max="31">
+        </div>
+        <div>
+          <label>Billing Day (1-31)</label>
+          <input id="billingDay" type="number" min="1" max="31">
+        </div>
+        <div>
+          <label>Monthly Installment</label>
+          <input id="installment" type="number" step="1" min="0" value="0">
+        </div>
+        <div>
+          <label>Tenor (months)</label>
+          <input id="tenor" type="number" min="0" value="0">
+        </div>
+      </div>
+      <div>
+        <label>Notes</label>
+        <textarea id="notes" placeholder="optional"></textarea>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="btn btn-secondary" onclick="google.script.host.close()">Cancel</button>
+        <button class="btn btn-primary btn-block" id="saveBtn">Save Debt</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">Saved</div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  $('saveBtn').addEventListener('click', () => {
+    const d = {
+      name: $('name').value.trim(),
+      provider: $('provider').value.trim(),
+      type: $('type').value,
+      status: $('status').value,
+      outstanding: parseFloat($('outstanding').value) || 0,
+      limit: parseFloat($('limit').value) || 0,
+      minPayment: parseFloat($('minPayment').value) || 0,
+      interest: parseFloat($('interest').value) || 0,
+      dueDay: parseInt($('dueDay').value, 10) || '',
+      billingDay: parseInt($('billingDay').value, 10) || '',
+      installment: parseFloat($('installment').value) || 0,
+      tenor: parseInt($('tenor').value, 10) || 0,
+      notes: $('notes').value
+    };
+    if (!d.name) return toast('Debt name is required', true);
+    setLoading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        setLoading(false);
+        if (!res.ok) return toast(res.error, true);
+        toast('Saved ✓');
+        setTimeout(() => google.script.host.close(), 700);
+      })
+      .withFailureHandler(e => { setLoading(false); toast(e.message, true); })
+      .saveDebt(d);
+  });
+  function setLoading(on) {
+    const b = $('saveBtn');
+    b.disabled = on; b.textContent = on ? 'Saving…' : 'Save Debt';
+  }
+  function toast(msg, isError) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
