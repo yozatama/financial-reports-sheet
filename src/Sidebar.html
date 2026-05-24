@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="container" style="padding:14px">
+
+    <div class="header">
+      <div class="logo">𝓚</div>
+      <div>
+        <h1>Kiro Finance</h1>
+        <div class="sub">Personal finance assistant</div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <div class="row between">
+        <div>
+          <div class="muted small">Total balance</div>
+          <div class="strong" style="font-size:20px" id="balance">—</div>
+        </div>
+        <div class="pill green" id="netPill">Net —</div>
+      </div>
+      <div class="row" style="gap:8px">
+        <div style="flex:1" class="card" style="padding:10px">
+          <div class="muted small">Income</div>
+          <div class="strong" id="income">—</div>
+        </div>
+        <div style="flex:1" class="card" style="padding:10px">
+          <div class="muted small">Expense</div>
+          <div class="strong" id="expense">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <button class="btn btn-primary btn-block" onclick="run('openQuickAdd')">⚡ Quick Add (AI)</button>
+      <button class="btn btn-secondary btn-block" onclick="run('openAddTransaction')">＋ Add Transaction</button>
+      <button class="btn btn-secondary btn-block" onclick="run('openAddAccount')">🏦 Add Account</button>
+      <button class="btn btn-secondary btn-block" onclick="run('openAddDebt')">💳 Add Debt</button>
+      <div class="divider"></div>
+      <button class="btn btn-secondary btn-block" onclick="run('refreshDashboard')">🔄 Refresh Dashboard</button>
+      <button class="btn btn-secondary btn-block" onclick="run('runSetup')">🛠 Run Setup</button>
+    </div>
+
+    <div class="card">
+      <div class="strong">Recent transactions</div>
+      <div class="divider"></div>
+      <div id="recent" class="stack"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  function run(fn) {
+    google.script.run
+      .withSuccessHandler(refresh)
+      .withFailureHandler(e => toast(e.message, true))[fn]();
+  }
+  function refresh() {
+    google.script.run
+      .withSuccessHandler(applyDashboard)
+      .withFailureHandler(e => toast(e.message, true))
+      .sidebarSnapshot();
+  }
+  function applyDashboard(s) {
+    $('balance').textContent = s.balanceFmt;
+    $('income').textContent = s.incomeFmt;
+    $('expense').textContent = s.expenseFmt;
+    $('netPill').textContent = 'Net ' + s.netFmt;
+    $('netPill').className = 'pill ' + (s.net >= 0 ? 'green' : 'red');
+    $('recent').innerHTML = (s.recent || []).map(function (t) {
+      return '<div class="row between">' +
+        '<div><div class="strong small">' + escape(t.title) + '</div>' +
+        '<div class="muted small">' + escape(t.subtitle) + '</div></div>' +
+        '<div class="strong small ' + escape(t.kind) + '">' + escape(t.amount) + '</div>' +
+        '</div>';
+    }).join('') || '<div class="muted small">No data yet</div>';
+  }
+  function escape(s) {
+    const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML;
+  }
+  function toast(msg, isError) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2400);
+  }
+  refresh();
+</script>
+</body>
+</html>

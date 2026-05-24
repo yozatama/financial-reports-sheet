@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🏦</div>
+      <div>
+        <h1>Add Account</h1>
+        <div class="sub">Wallets, banks, e-wallets, digital banks, investments.</div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <div class="grid cols-2">
+        <div>
+          <label>Account Name</label>
+          <input id="name" placeholder="e.g. BCA Tahapan">
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="type">
+            <option>Cash</option><option>Bank</option><option>Digital Bank</option>
+            <option>E-Wallet</option><option>Credit Card</option>
+            <option>Investment</option><option>Savings</option>
+          </select>
+        </div>
+        <div>
+          <label>Institution</label>
+          <input id="institution" placeholder="BCA, Mandiri, Gojek, ...">
+        </div>
+        <div>
+          <label>Currency</label>
+          <input id="currency" value="IDR">
+        </div>
+        <div>
+          <label>Initial Balance</label>
+          <input id="initialBalance" type="number" step="1" min="0" value="0">
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="status"><option>Active</option><option>Inactive</option></select>
+        </div>
+      </div>
+      <div>
+        <label>Notes</label>
+        <textarea id="notes" placeholder="optional"></textarea>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="btn btn-secondary" onclick="google.script.host.close()">Cancel</button>
+        <button class="btn btn-primary btn-block" id="saveBtn">Save Account</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">Saved</div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  $('saveBtn').addEventListener('click', () => {
+    const acc = {
+      name: $('name').value.trim(),
+      type: $('type').value,
+      institution: $('institution').value.trim(),
+      currency: $('currency').value.trim() || 'IDR',
+      initialBalance: parseFloat($('initialBalance').value) || 0,
+      status: $('status').value,
+      notes: $('notes').value
+    };
+    if (!acc.name) return toast('Account name is required', true);
+    setLoading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        setLoading(false);
+        if (!res.ok) return toast(res.error, true);
+        toast('Saved ✓');
+        setTimeout(() => google.script.host.close(), 700);
+      })
+      .withFailureHandler(e => { setLoading(false); toast(e.message, true); })
+      .saveAccount(acc);
+  });
+  function setLoading(on) {
+    const b = $('saveBtn');
+    b.disabled = on; b.textContent = on ? 'Saving…' : 'Save Account';
+  }
+  function toast(msg, isError) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
