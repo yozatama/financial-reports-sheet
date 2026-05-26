@@ -1,4 +1,4 @@
-# Kiro Finance — Personal Finance Spreadsheet System
+# Yoza's Financial Report — Personal Finance Spreadsheet System
 
 A polished personal-finance management system that runs entirely on **Google
 Sheets + Google Apps Script**, with an AI-assisted natural-language transaction
@@ -63,8 +63,8 @@ See [`docs/SETUP.md`](docs/SETUP.md) for the full walk-through. TL;DR:
 1. Create a new Google Sheet.
 2. Open **Extensions → Apps Script** and paste each file from `src/` into
    matching script files of the same name (or use [clasp](https://github.com/google/clasp)).
-3. Save, reload the spreadsheet, and choose **Kiro Finance → Setup → Run Initial Setup**.
-4. Use **Kiro Finance → Quick Add (AI)** to start logging transactions in plain language.
+3. Save, reload the spreadsheet, and choose **Yoza's Financial Report → Setup → Run Initial Setup**.
+4. Use **Yoza's Financial Report → Quick Add (AI)** to start logging transactions in plain language.
 5. (Optional) Add a Gemini API key in the *Settings* sheet — see
    [`docs/GEMINI_INTEGRATION.md`](docs/GEMINI_INTEGRATION.md).
 

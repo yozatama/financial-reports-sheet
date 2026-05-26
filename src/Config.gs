@@ -8,9 +8,9 @@
  */
 
 const APP = Object.freeze({
-  NAME: 'Kiro Finance',
+  NAME: "Yoza's Financial Report",
   VERSION: '1.0.0',
-  AUTHOR: 'Kiro Finance Team',
+  AUTHOR: 'Yoza Pratama',
   DEFAULT_CURRENCY: 'IDR',
   DEFAULT_LOCALE: 'id-ID',
   DEFAULT_TIMEZONE: 'Asia/Jakarta'

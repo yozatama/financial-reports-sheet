@@ -23,15 +23,15 @@ ongoing updates).
    - Replace its contents with `src/appsscript.json` from this repo.
 6. **Save** the project (`⌘/Ctrl + S`).
 7. Reload the Google Sheet.
-8. A new menu **"Kiro Finance"** appears. Run it once — Google will ask you to
+8. A new menu **"Yoza's Financial Report"** appears. Run it once — Google will ask you to
    authorise the script. Accept the permissions.
-9. Click **Kiro Finance → Setup → Run Initial Setup**. This creates every
+9. Click **Yoza's Financial Report → Setup → Run Initial Setup**. This creates every
    sheet (Dashboard, Transactions, Accounts, Debts, Budgets, etc.) with seed
    data and validations.
-10. (Optional) **Kiro Finance → Setup → Install Daily Triggers** to enable the
+10. (Optional) **Yoza's Financial Report → Setup → Install Daily Triggers** to enable the
     07:00 maintenance job.
 
-You're done. Try **Kiro Finance → Quick Add (AI)** and type something like
+You're done. Try **Yoza's Financial Report → Quick Add (AI)** and type something like
 `jajan kopi 35rb pake gopay`.
 
 ## Option B — clasp (recommended)
@@ -43,7 +43,7 @@ git clone https://github.com/<your-fork>/financial-reports-sheet.git
 cd financial-reports-sheet/src
 
 # Create a new container-bound script for an existing sheet:
-clasp create --type sheets --title "Kiro Finance" --rootDir .
+clasp create --type sheets --title "Yoza's Financial Report" --rootDir .
 
 # Or attach to an existing script project (paste the script ID):
 # echo '{"scriptId":"<SCRIPT_ID>","rootDir":"."}' > .clasp.json

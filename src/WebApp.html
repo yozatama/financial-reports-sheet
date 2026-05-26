@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <?!= include('Styles'); ?>
+  <style>
+    body { min-height: 100vh; padding-bottom: 80px; }
+    .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+    .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
+           border-top: 1px solid var(--border); display: flex; z-index: 50; }
+    .nav button { flex: 1; padding: 10px 4px; border: none; background: none;
+                  font-size: 11px; color: var(--muted); cursor: pointer;
+                  display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .nav button.active { color: var(--primary); font-weight: 600; }
+    .nav button .icon { font-size: 20px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .summary-card { background: var(--card); border: 1px solid var(--border);
+                    border-radius: 12px; padding: 12px; }
+    .summary-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase;
+                           letter-spacing: 0.04em; margin-bottom: 4px; }
+    .summary-card .value { font-size: 18px; font-weight: 700; }
+    .summary-card.full { grid-column: 1 / -1; }
+    .tx-item { display: flex; justify-content: space-between; align-items: center;
+               padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .tx-item:last-child { border-bottom: none; }
+    .tx-title { font-weight: 600; font-size: 13px; }
+    .tx-sub { font-size: 11px; color: var(--muted); }
+    .tx-amount { font-weight: 700; font-size: 13px; }
+    .tx-amount.green { color: var(--success); }
+    .tx-amount.red { color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<!-- ===== PAGE: Home ===== -->
+<div class="container page active" id="pageHome">
+  <div class="header">
+    <div class="logo">💰</div>
+    <div>
+      <h1 id="appName">Financial Report</h1>
+      <div class="sub" id="monthLabel">Loading...</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card full">
+      <div class="label">Total Balance</div>
+      <div class="value" id="totalBalance">—</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Income</div>
+      <div class="value green" id="monthIncome">—</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Expense</div>
+      <div class="value red" id="monthExpense">—</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Net Cash Flow</div>
+      <div class="value" id="netFlow">—</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Transactions</div>
+      <div class="value" id="txCount">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="strong">Recent Transactions</div>
+    <div class="divider"></div>
+    <div id="recentList"><div class="muted small">Loading...</div></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: Quick Add ===== -->
+<div class="container page" id="pageQuickAdd">
+  <div class="header">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>Quick Add</h1>
+      <div class="sub">Type in plain language (ID/EN)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label for="raw">What did you do?</label>
+    <textarea id="raw" rows="3" placeholder="e.g. jajan kopi 35rb pake gopay"></textarea>
+
+    <div class="examples" style="margin-top:10px">
+      <button type="button" data-ex="jajan kopi 35rb">kopi 35rb</button>
+      <button type="button" data-ex="bayar listrik 450k">listrik 450k</button>
+      <button type="button" data-ex="gajian 8jt">gajian 8jt</button>
+      <button type="button" data-ex="topup ovo 100rb">topup ovo</button>
+    </div>
+
+    <button class="btn btn-primary btn-block" style="margin-top:14px" id="parseBtn">Parse & Save</button>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <div class="row between">
+      <div class="strong">Parsed result</div>
+      <span class="pill" id="confPill">0%</span>
+    </div>
+    <div class="divider"></div>
+    <div class="kv"><span class="k">Type</span><span class="v" id="rType">—</span></div>
+    <div class="kv"><span class="k">Category</span><span class="v" id="rCat">—</span></div>
+    <div class="kv"><span class="k">Amount</span><span class="v" id="rAmt">—</span></div>
+    <div class="kv"><span class="k">Account</span><span class="v" id="rAcc">—</span></div>
+    <div class="kv"><span class="k">Merchant</span><span class="v" id="rMerchant">—</span></div>
+    <div class="kv"><span class="k">Method</span><span class="v" id="rMethod">—</span></div>
+    <div style="margin-top:12px">
+      <button class="btn btn-primary btn-block" id="commitBtn">Confirm & Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: Accounts ===== -->
+<div class="container page" id="pageAccounts">
+  <div class="header">
+    <div class="logo">🏦</div>
+    <div>
+      <h1>Accounts</h1>
+      <div class="sub">Wallets, banks, e-wallets</div>
+    </div>
+  </div>
+  <div class="card" id="accountsList"><div class="muted small">Loading...</div></div>
+</div>
+
+<!-- ===== Bottom Nav ===== -->
+<div class="nav">
+  <button class="active" data-page="pageHome"><span class="icon">🏠</span>Home</button>
+  <button data-page="pageQuickAdd"><span class="icon">⚡</span>Quick Add</button>
+  <button data-page="pageAccounts"><span class="icon">🏦</span>Accounts</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // ---------- Navigation ----------
+  document.querySelectorAll('.nav button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+      document.querySelectorAll('.nav button').forEach(function (b) { b.classList.remove('active'); });
+      document.getElementById(btn.dataset.page).classList.add('active');
+      btn.classList.add('active');
+    });
+  });
+
+  // ---------- Quick Add examples ----------
+  document.querySelectorAll('.examples button').forEach(function (b) {
+    b.addEventListener('click', function () { document.getElementById('raw').value = b.dataset.ex; });
+  });
+
+  // ---------- Boot ----------
+  var parsedResult = null;
+
+  function loadHome() {
+    google.script.run
+      .withSuccessHandler(function (s) {
+        document.getElementById('appName').textContent = s.appName || 'Financial Report';
+        document.getElementById('monthLabel').textContent = s.monthLabel || '';
+        document.getElementById('totalBalance').textContent = s.balanceFmt;
+        document.getElementById('monthIncome').textContent = s.incomeFmt;
+        document.getElementById('monthExpense').textContent = s.expenseFmt;
+        document.getElementById('netFlow').textContent = s.netFmt;
+        document.getElementById('txCount').textContent = String(s.txCount || 0);
+        renderRecent(s.recent || []);
+        renderAccounts(s.accounts || []);
+      })
+      .withFailureHandler(function (e) { toast(e.message, true); })
+      .webAppSnapshot();
+  }
+
+  function renderRecent(items) {
+    var el = document.getElementById('recentList');
+    if (!items.length) { el.innerHTML = '<div class="muted small">No transactions yet</div>'; return; }
+    el.innerHTML = items.map(function (t) {
+      return '<div class="tx-item"><div><div class="tx-title">' + esc(t.title) + '</div>' +
+        '<div class="tx-sub">' + esc(t.subtitle) + '</div></div>' +
+        '<div class="tx-amount ' + esc(t.kind) + '">' + esc(t.amount) + '</div></div>';
+    }).join('');
+  }
+
+  function renderAccounts(items) {
+    var el = document.getElementById('accountsList');
+    if (!items.length) { el.innerHTML = '<div class="muted small">No accounts</div>'; return; }
+    el.innerHTML = items.map(function (a) {
+      return '<div class="tx-item"><div><div class="tx-title">' + esc(a.name) + '</div>' +
+        '<div class="tx-sub">' + esc(a.type) + ' · ' + esc(a.institution) + '</div></div>' +
+        '<div class="tx-amount">' + esc(a.balance) + '</div></div>';
+    }).join('');
+  }
+
+  // ---------- Quick Add ----------
+  document.getElementById('parseBtn').addEventListener('click', function () {
+    var text = document.getElementById('raw').value.trim();
+    if (!text) return toast('Type something first', true);
+    setBtn('parseBtn', true, 'Parsing...');
+    google.script.run
+      .withSuccessHandler(function (res) {
+        setBtn('parseBtn', false, 'Parse & Save');
+        if (!res.ok) return toast(res.error, true);
+        parsedResult = res.data;
+        showParsed(parsedResult);
+      })
+      .withFailureHandler(function (e) { setBtn('parseBtn', false, 'Parse & Save'); toast(e.message, true); })
+      .aiParse(text);
+  });
+
+  document.getElementById('commitBtn').addEventListener('click', function () {
+    if (!parsedResult) return;
+    setBtn('commitBtn', true, 'Saving...');
+    google.script.run
+      .withSuccessHandler(function (res) {
+        setBtn('commitBtn', false, 'Confirm & Save');
+        if (!res.ok) return toast(res.error, true);
+        toast('Saved ✓');
+        document.getElementById('resultCard').style.display = 'none';
+        document.getElementById('raw').value = '';
+        parsedResult = null;
+        loadHome();
+      })
+      .withFailureHandler(function (e) { setBtn('commitBtn', false, 'Confirm & Save'); toast(e.message, true); })
+      .aiCommit(parsedResult);
+  });
+
+  function showParsed(p) {
+    document.getElementById('resultCard').style.display = '';
+    document.getElementById('rType').textContent = p.transaction_type;
+    document.getElementById('rCat').textContent = (p.category || '') + (p.subcategory ? ' / ' + p.subcategory : '');
+    document.getElementById('rAmt').textContent = Number(p.amount).toLocaleString('id-ID');
+    document.getElementById('rAcc').textContent = p.account + (p.account_to ? ' → ' + p.account_to : '');
+    document.getElementById('rMerchant').textContent = p.merchant || '—';
+    document.getElementById('rMethod').textContent = p.method || 'rules';
+    var conf = Math.round((p.confidence || 0) * 100);
+    var pill = document.getElementById('confPill');
+    pill.textContent = conf + '%';
+    pill.className = 'pill ' + (conf >= 80 ? 'green' : conf >= 65 ? 'amber' : 'red');
+  }
+
+  // ---------- Helpers ----------
+  function setBtn(id, loading, label) {
+    var b = document.getElementById(id); b.disabled = loading; b.textContent = label;
+  }
+  function toast(msg, isError) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 2400);
+  }
+  function esc(s) {
+    var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML;
+  }
+
+  loadHome();
+</script>
+</body>
+</html>

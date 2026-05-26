@@ -9,6 +9,21 @@
  * -------------------------------------------------------------
  */
 
+/* ---------------- Web App entry point ---------------- */
+
+/**
+ * Required for Web App deployment.
+ * Serves the WebApp.html page as a standalone full-screen app.
+ * Deploy via: Extensions → Apps Script → Deploy → New deployment → Web app
+ */
+function doGet(e) {
+  return HtmlService.createTemplateFromFile('WebApp')
+    .evaluate()
+    .setTitle(APP.NAME)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');
+}
+
 /* ---------------- Menu ---------------- */
 
 function onOpen() {
@@ -115,6 +130,42 @@ function aiCommit(payload) {
   return safeCall_(function () {
     return AIParser.commit(payload);
   });
+}
+
+/** Snapshot used by the Web App (doGet) page. */
+function webAppSnapshot() {
+  var totals = TransactionService.monthTotals(new Date());
+  var net = totals.income - totals.expense;
+  var recent = TransactionService.list().slice(0, 8).map(function (t) {
+    var amount = (t.Type === TYPES.EXPENSE ? '-' : (t.Type === TYPES.INCOME ? '+' : '↔ ')) + fmtMoney_(t.Amount);
+    return {
+      title: (t.Category || '') + (t.Subcategory ? ' · ' + t.Subcategory : ''),
+      subtitle: fmtDate_(t.Date) + ' · ' + (t.Account || '') + (t['Account To'] ? ' → ' + t['Account To'] : ''),
+      amount: amount,
+      kind: t.Type === TYPES.EXPENSE ? 'red' : (t.Type === TYPES.INCOME ? 'green' : '')
+    };
+  });
+  var accounts = AccountService.list(true).map(function (a) {
+    return {
+      name: a['Account Name'],
+      type: a['Account Type'],
+      institution: a['Institution'] || '',
+      balance: fmtMoney_(parseFloat(a['Current Balance']) || 0)
+    };
+  });
+  var now = new Date();
+  return {
+    appName: APP.NAME,
+    monthLabel: Utilities.formatDate(now, APP.DEFAULT_TIMEZONE, 'MMMM yyyy'),
+    balance: AccountService.totalBalance(),
+    balanceFmt: fmtMoney_(AccountService.totalBalance()),
+    income: totals.income, incomeFmt: fmtMoney_(totals.income),
+    expense: totals.expense, expenseFmt: fmtMoney_(totals.expense),
+    net: net, netFmt: fmtMoney_(net),
+    txCount: totals.count,
+    recent: recent,
+    accounts: accounts
+  };
 }
 
 function saveTransaction(tx) {
