@@ -77,8 +77,8 @@ function setupSettings_(ss) {
       ['locale', APP.DEFAULT_LOCALE, 'Spreadsheet locale'],
       ['timezone', APP.DEFAULT_TIMEZONE, 'Spreadsheet timezone'],
       ['monthly_income_target', 10000000, 'Used for savings rate insight'],
-      ['openai_api_key', '', 'Optional. Paste your OpenAI key to enable AI fallback parser'],
-      ['openai_model', 'gpt-4o-mini', 'OpenAI model used by the AI fallback'],
+      ['gemini_api_key', '', 'Optional. Paste your Gemini API key to enable the AI fallback parser. Get one at https://aistudio.google.com/apikey'],
+      ['gemini_model', 'gemini-2.5-flash-lite', 'Gemini model used by the AI fallback'],
       ['email_reminders', 'No', 'Send debt due-date reminders by email (Yes/No)'],
       ['notify_email', Session.getEffectiveUser().getEmail() || '', 'Email address for reminders'],
       ['theme', 'light', 'UI theme: light or dark']

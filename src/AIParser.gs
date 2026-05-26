@@ -11,8 +11,8 @@
  *   4. Match account via AccountService aliases.
  *   5. Match category via keyword dictionary.
  *   6. Score confidence based on what we matched.
- *   7. If confidence is below threshold AND OpenAI key is set
- *      -> escalate to OpenAIClient.parse() and merge.
+ *   7. If confidence is below threshold AND a Gemini key is set
+ *      -> escalate to GeminiClient.parse() and merge.
  *   8. Always log the result to the AI Logs sheet.
  *
  * The parser returns a deterministic envelope:
@@ -194,13 +194,13 @@ var AIParser = (function () {
       reasons: reasons
     };
 
-    // Optional escalation to OpenAI for low-confidence inputs
-    if (result.confidence < THRESHOLDS.AI_CONFIDENCE_OPENAI) {
-      var openAIResult = OpenAIClient.tryParse(raw);
-      if (openAIResult && openAIResult.ok) {
-        result = mergeAIResult_(result, openAIResult.data);
-        result.method = 'rules+openai';
-        result.confidence = Math.max(result.confidence, openAIResult.data.confidence || 0.75);
+    // Optional escalation to Gemini for low-confidence inputs
+    if (result.confidence < THRESHOLDS.AI_CONFIDENCE_FALLBACK) {
+      var aiResult = GeminiClient.tryParse(raw);
+      if (aiResult && aiResult.ok) {
+        result = mergeAIResult_(result, aiResult.data);
+        result.method = 'rules+gemini';
+        result.confidence = Math.max(result.confidence, aiResult.data.confidence || 0.75);
       }
     }
 
@@ -440,7 +440,7 @@ var AIParser = (function () {
       confidence: ai.confidence || rule.confidence,
       raw_input: rule.raw_input,
       method: rule.method,
-      reasons: rule.reasons.concat(['OpenAI used'])
+      reasons: rule.reasons.concat(['Gemini used'])
     };
   }
 
